@@ -49,12 +49,9 @@
   gather_facts: false
 
   tasks:
-    - name: Wait for yum to be available
-          shell: |
-            while sudo fuser /var/lib/rpm/.rpm.lock >/dev/null 2>&1 || sudo fuser /var/cache/yum >/dev/null 2>&1; do
-              sleep 10
-            done
-            sleep 30
+    - name: Wait for system to be ready
+      pause:
+        seconds: 60
 
     - name: Install Docker
       yum:
