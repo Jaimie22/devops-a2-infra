@@ -50,9 +50,11 @@
 
   tasks:
     - name: Wait for yum to be available
-      shell: while fuser /var/run/yum.pid >/dev/null 2>&1; do sleep 5; done
-      retries: 10
-      delay: 10
+          shell: |
+            while sudo fuser /var/lib/rpm/.rpm.lock >/dev/null 2>&1 || sudo fuser /var/cache/yum >/dev/null 2>&1; do
+              sleep 10
+            done
+            sleep 30
 
     - name: Install Docker
       yum:
