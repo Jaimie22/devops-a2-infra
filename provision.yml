@@ -46,6 +46,8 @@
   hosts: prod
   become: true
   gather_facts: false
+  vars:
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
 
   vars:
     image_tag: "{{ lookup('env', 'IMAGE_TAG') }}"
