@@ -42,17 +42,18 @@
     - name: Save public IP
       set_fact:
         prod_ip: "{{ ec2.instances[0].public_ip_address }}"
-        
-    - name: Configure and Deploy App
-      hosts: prod
-      become: true
-      gather_facts: false
 
-tasks:
+- name: Configure and Deploy App
+  hosts: prod
+  become: true
+  gather_facts: false
+
+  tasks:
     - name: Wait for yum to be available
       shell: while fuser /var/run/yum.pid >/dev/null 2>&1; do sleep 5; done
       retries: 10
       delay: 10
+
     - name: Install Docker
       yum:
         name: docker
