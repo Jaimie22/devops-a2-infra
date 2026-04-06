@@ -37,6 +37,7 @@
         ansible_host: "{{ ec2.instances[0].public_ip_address }}"
         ansible_user: ec2-user
         ansible_ssh_private_key_file: ~/.ssh/Assignment-2.pem
+        ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
 
     - name: Save public IP
       set_fact:
@@ -46,11 +47,6 @@
   hosts: prod
   become: true
   gather_facts: false
-  vars:
-    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
-
-  vars:
-    image_tag: "{{ lookup('env', 'IMAGE_TAG') }}"
 
   tasks:
     - name: Install Docker
@@ -65,7 +61,7 @@
         enabled: true
 
     - name: Pull Docker image
-      command: docker pull jdog22/runcalc-pro:{{ image_tag }}
+      command: docker pull jdog22/runcalc-pro:{{ lookup('env', 'IMAGE_TAG') }}
 
     - name: Stop existing container
       command: docker stop runcalc
@@ -76,4 +72,4 @@
       ignore_errors: true
 
     - name: Run container
-      command: docker run -d --name runcalc -p 80:80 jdog22/runcalc-pro:{{ image_tag }}
+      command: docker run -d --name runcalc -p 80:80 jdog22/runcalc-pro:{{ lookup('env', 'IMAGE_TAG') }}
