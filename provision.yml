@@ -1,0 +1,77 @@
+---
+- name: Provision and Deploy RuncCalc Pro
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    aws_region: us-east-1
+    instance_type: t2.micro
+    ami_id: ami-0c02fb55956c7d316
+    key_name: Assignment-2
+    security_group: launch-wizard-1
+    image_tag: "{{ lookup('env', 'IMAGE_TAG') }}"
+
+  tasks:
+    - name: Launch EC2 instance
+      amazon.aws.ec2_instance:
+        name: "prod-runcalc-{{ image_tag }}"
+        key_name: "{{ key_name }}"
+        instance_type: "{{ instance_type }}"
+        image_id: "{{ ami_id }}"
+        region: "{{ aws_region }}"
+        security_groups: "{{ security_group }}"
+        wait: true
+        state: running
+      register: ec2
+
+    - name: Wait for SSH
+      wait_for:
+        host: "{{ ec2.instances[0].public_ip_address }}"
+        port: 22
+        timeout: 120
+
+    - name: Add host to inventory
+      add_host:
+        name: prod
+        ansible_host: "{{ ec2.instances[0].public_ip_address }}"
+        ansible_user: ec2-user
+        ansible_ssh_private_key_file: ~/.ssh/Assignment-2.pem
+
+    - name: Save public IP
+      set_fact:
+        prod_ip: "{{ ec2.instances[0].public_ip_address }}"
+
+- name: Configure and Deploy App
+  hosts: prod
+  become: true
+  gather_facts: false
+
+  vars:
+    image_tag: "{{ lookup('env', 'IMAGE_TAG') }}"
+
+  tasks:
+    - name: Install Docker
+      yum:
+        name: docker
+        state: present
+
+    - name: Start Docker
+      service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Pull Docker image
+      command: docker pull jdog22/runcalc-pro:{{ image_tag }}
+
+    - name: Stop existing container
+      command: docker stop runcalc
+      ignore_errors: true
+
+    - name: Remove existing container
+      command: docker rm runcalc
+      ignore_errors: true
+
+    - name: Run container
+      command: docker run -d --name runcalc -p 80:80 jdog22/runcalc-pro:{{ image_tag }}
