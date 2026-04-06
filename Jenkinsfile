@@ -21,7 +21,7 @@ pipeline {
 
         stage('Install Ansible Dependencies') {
             steps {
-                sh 'pip install boto3 botocore --break-system-packages'
+                sh 'pip3 install boto3 botocore --break-system-packages'
                 sh 'ansible-galaxy collection install amazon.aws'
             }
         }
