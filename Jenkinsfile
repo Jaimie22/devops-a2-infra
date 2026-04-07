@@ -10,6 +10,7 @@ pipeline {
         AWS_SECRET_ACCESS_KEY = credentials('aws-secret-key')
         AWS_SESSION_TOKEN = credentials('aws-session-token')
         AWS_DEFAULT_REGION = 'us-east-1'
+        VAULT_PASS = credentials('ansible-vault-password')
     }
 
     stages {
@@ -26,19 +27,15 @@ pipeline {
             }
         }
 
-        stage('Copy SSH Key') {
+        stage('Prepare Vault Password') {
             steps {
-                sh '''
-                    mkdir -p ~/.ssh
-                    cp ~/.aws/../Assignment-2.pem ~/.ssh/Assignment-2.pem || true
-                    chmod 400 ~/.ssh/Assignment-2.pem || true
-                '''
+                sh 'echo $VAULT_PASS > ~/.vault_pass && chmod 600 ~/.vault_pass'
             }
         }
 
         stage('Run Ansible Playbook') {
             steps {
-                sh "IMAGE_TAG=${params.IMAGE_TAG} ansible-playbook provision.yml"
+                sh "IMAGE_TAG=${params.IMAGE_TAG} ansible-playbook provision.yml --vault-password-file ~/.vault_pass"
             }
         }
 
